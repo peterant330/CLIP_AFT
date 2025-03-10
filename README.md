@@ -7,7 +7,7 @@ Implementation for ICLR 2025 paper [Boosting the visual interpretability of CLIP
 ![(a,b) Comparison of Simple Gradients/Grad-Cam between CLIP w/wo AFT. AFT greatly
 improves the visual quality. (c) Evaluation of Simple Gradients on out-of-distribution dataset. (d)
 Evaluation of Simple Gradients with linear probing. The improvements of visual interpretability
-stem from AFT can transfer across datasets and to different tasks.](assets/visualquality.pdf)
+stem from AFT can transfer across datasets and to different tasks.](assets/image.png)
 
 ## Setup
 
