@@ -4,11 +4,11 @@ Implementation for ICLR 2025 paper [Boosting the visual interpretability of CLIP
  by [Shizhan Gong](https://peterant330.github.io/), [Haoyu Lei](lh218.github.io), [Qi Dou](https://www.cse.cuhk.edu.hk/~qdou/), and [Farzan Farnia](https://www.cse.cuhk.edu.hk/~farnia/)
 
 ## Sample Results
-![(a,b) Comparison of Simple Gradients/Grad-Cam between CLIP w/wo AFT. AFT greatly
+![sample_image](assets/image.png)
+Figure. (a,b) Comparison of Simple Gradients/Grad-Cam between CLIP w/wo AFT. AFT greatly
 improves the visual quality. (c) Evaluation of Simple Gradients on out-of-distribution dataset. (d)
 Evaluation of Simple Gradients with linear probing. The improvements of visual interpretability
-stem from AFT can transfer across datasets and to different tasks.](assets/image.png)
-
+stem from AFT can transfer across datasets and to different tasks.
 ## Setup
 
 ## Training
