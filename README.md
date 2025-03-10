@@ -3,16 +3,19 @@
 Implementation for ICLR 2025 paper [Boosting the visual interpretability of CLIP via adversarial fine-tuning](https://openreview.net/forum?id=khuIvzxPRp)
  by [Shizhan Gong](https://peterant330.github.io/), [Haoyu Lei](lh218.github.io), [Qi Dou](https://www.cse.cuhk.edu.hk/~qdou/), and [Farzan Farnia](https://www.cse.cuhk.edu.hk/~farnia/)
 
-# Sample Results
-![Alt text](assets/visualquality.pdf?raw=true "Title")
+## Sample Results
+![(a,b) Comparison of Simple Gradients/Grad-Cam between CLIP w/wo AFT. AFT greatly
+improves the visual quality. (c) Evaluation of Simple Gradients on out-of-distribution dataset. (d)
+Evaluation of Simple Gradients with linear probing. The improvements of visual interpretability
+stem from AFT can transfer across datasets and to different tasks.](assets/visualquality.pdf)
 
-# Setup
+## Setup
 
-# Training
+## Training
 
-# Interpretation
+## Interpretation
 
-# Pre-trained Checkpoint
+## Pre-trained Checkpoint
 
 
 ## Bibtex
