@@ -1,15 +1,11 @@
 import sys
-
 from train.datasets import COCOFlickrDataset, ImageNetDataset
-from CLIP_eval.eval_utils import load_clip_model
-
-sys.path.append("open_flamingo")
+from utils import load_clip_model
 import os
 import shutil
 import time
 import string
 import random
-
 import numpy as np
 import open_clip
 import torch
@@ -17,13 +13,12 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from training.scheduler import cosine_lr
 from torchvision import transforms
-from open_flamingo.eval.classification_utils import IMAGENET_1K_CLASS_ID_TO_LABEL
+from train.classification_utils import IMAGENET_1K_CLASS_ID_TO_LABEL
 from train.pgd_train import pgd
 from train.apgd_train import apgd_train as apgd
 import wandb
 from train.utils import init_wandb, AverageMeter
-from train.sam_data import SamData
-from open_flamingo.eval.models.utils import unwrap_model
+from train.utils import unwrap_model
 from train.utils import str2bool
 
 import argparse
@@ -109,33 +104,13 @@ def main(args):
     del image_processor
     print(f'[preprocessor_without_normalize] {preprocessor_without_normalize}')
     print(f'[normalize] {normalize}')
-    # preprocessor_without_normalize contains following transforms:
-    # - Resize(size=224, interpolation=bicubic, max_size=None, antialias=warn)
-    # - CenterCrop(size=(224, 224))
-    # - ToTensor()
-    # normalize:
-    # Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
-
-    # get data
-    if args.dataset == 'imagenet':
+    if args.dataset == "imagenet":
         dataset = ImageNetDataset(
             root=args.imagenet_root + '/ILSVRC2012_img_train',
             transform=preprocessor_without_normalize,
         )
-
-    elif args.dataset == 'segment_anything':
-        dataset = SamData('/data/naman_deep_singh/datasets/newSAM', transform=preprocessor_without_normalize)
-
-        print(dataset.__len__())
-    elif args.dataset == 'coco':
-        image_dir_path = '/ailab/user/gongshizhan/dataset/COCO/train2017'
-        annotations_path = '/ailab/user/gongshizhan/dataset/COCO/captions_train2017.json'
-        dataset = COCOFlickrDataset(
-            image_dir_path=image_dir_path,
-            annotations_path=annotations_path,
-            transform=preprocessor_without_normalize,
-            prefix=""
-        )
+    else:
+        raise ValueError(f'data {args.dataset} not supported.')
     dataset_eval = ImageNetDataset(
         root=args.imagenet_root + '/ILSVRC2012_img_val',
         transform=preprocessor_without_normalize,
@@ -157,9 +132,6 @@ def main(args):
     with torch.no_grad():
         embedding_text_labels_norm = []
         for el in (text_tokens[:500], text_tokens[500:]):
-            # we need to split the text tokens into two batches because otherwise we run out of memory
-            # note that we are accessing the model directly here, not the CustomModel wrapper
-            # thus its always normalizing the text embeddings
             embedding_text_labels_norm.append(
                 model_orig.encode_text(el.to(main_device), normalize=True).detach().cpu()
             )
@@ -168,13 +140,6 @@ def main(args):
             F.normalize(embedding_text_labels_norm, dim=0),
             embedding_text_labels_norm
         )
-        #if args.clip_model_name == 'ViT-B-32':
-        #    assert embedding_text_labels_norm.shape == (512, 1000), embedding_text_labels_norm.shape
-        #elif args.clip_model_name in ('ViT-L-14', 'ViT-L-14-336'):
-        #    assert embedding_text_labels_norm.shape == (768, 1000), embedding_text_labels_norm.shape
-        #else:
-        #    raise ValueError(f'Unknown model: {args.clip_model_name}')
-
     model_orig.cpu()
     model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
     if num_gpus > 1:
@@ -205,7 +170,6 @@ def main(args):
 
     # set scheduler
     scheduler = cosine_lr(optimizer, args.lr, args.warmup, args.steps)
-
     # compute amount of epochs
     total_epochs = args.steps / len(dataloader)
     print(f'train for {total_epochs} epochs')
@@ -295,7 +259,7 @@ def train_one_epoch(
         # loss for the attack
         loss_inner_wrapper = ComputeLossWrapper(
             embedding_orig, embedding_text_labels_norm,
-            reduction='none' if args.attack == 'apgd' else 'mean', loss=args.inner_loss,
+            reduction='mean', loss=args.inner_loss,
             logit_scale=100.
             )
         model.eval()
@@ -315,18 +279,6 @@ def train_one_epoch(
                 perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
                 mode='max',
                 verbose=False
-            )
-        elif args.attack == 'apgd':
-            # apgd currently always applies output normalization
-            data_adv = apgd(
-                model=model,
-                loss_fn=loss_inner_wrapper,
-                x=data,
-                y=targets,
-                norm=args.norm,
-                eps=args.eps,
-                n_iter=args.iterations_adv,
-                verbose=True
             )
         elif args.attack == 'none':
             data_adv = data
@@ -385,7 +337,6 @@ def train_one_epoch(
 
         eval_logs = dict()
         if (step_total-1) % args.eval_freq == 0:
-            # we compute acc and racc (against supervised apgd) on validation data
             model.eval()
             data_eval, targets_eval = next(iter(dataloader_eval))
             data_eval, targets_eval = data_eval.cuda(), targets_eval.cuda()
@@ -411,8 +362,6 @@ def train_one_epoch(
                 embedding_eval_norm = model(data_eval, output_normalize=True)
                 logits_eval = embedding_eval_norm @ embedding_text_labels_norm
                 acc_eval = compute_acc(logits_eval, targets_eval)
-                # note we compute the cosine sim between clean and adv embedding,
-                # not between orig and adv embedding as for training
                 cos_sim_eval = F.cosine_similarity(embedding_adv_eval_norm, embedding_eval_norm, dim=1).mean()
             eval_logs['eval/racc'] = racc_eval
             eval_logs['eval/acc'] = acc_eval

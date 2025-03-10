@@ -18,18 +18,29 @@ pip install -r requirements.txt
 
 ## Training
 
-Please use the following code for adversarial fine-tuning.
+Please use the following code for adversarial fine-tuning. Note the parameters including imagenet_root, output_dir, and experiment_name should be changed.
+ Also clip_model_name and pretrained can be changed according to the specific pre-trained models to be AFT.
 
 ```
-
+python -m train.adversarial_training_clip --clip_model_name ViT-B-16 --pretrained openai --dataset imagenet 
+--imagenet_root IMAGENET_ROOT --template std --output_normalize True --steps 20000 -
+-warmup 1400 --batch_size 128 --loss l2 --opt adamw --lr 1e-5 --wd 1e-4 --attack pgd --inner_loss l2 
+--norm huber --eps 1 --eps2 1 --iterations_adv 10 --stepsize_adv 1 --wandb False 
+--output_dir OUTPUT_DIR --experiment_name EXP_NAME --log_freq 10 --eval_freq 10
 ```
 
 ## Interpretation
-Please refer to for generating simple gradient map and GradCAM for CLIP model.
+Please refer to `interpretation.ipynb` for generating Simple Gradients and Grad-Cam for CLIP model.
 
 
 ## Pre-trained Checkpoint
-Our pretrained checkpoint can be downloaded through [one-drive]().
+Our pretrained checkpoint can be downloaded through one-drive.
+
+[ViT-L-14](https://mycuhk-my.sharepoint.com/:u:/g/personal/1155187960_link_cuhk_edu_hk/EfUVcY67_xdIi-Q9sfBNWhEBiPAeY3Zu-uAo4XyUdqk2wQ?e=IlEVfy)
+
+[ViT-B-16](https://mycuhk-my.sharepoint.com/:u:/g/personal/1155187960_link_cuhk_edu_hk/Efh-YY7miV9LtDkuLf8ci-MBbd7nLSHsgGE_lIEHnF-ZQA?e=CVew1G)
+
+[RN50](https://mycuhk-my.sharepoint.com/:u:/g/personal/1155187960_link_cuhk_edu_hk/Ebph4gnSDdVMv01en-tdRycBLu3yMUC0n2zXJnkAn1DXeQ?e=kieCYk)
 
 ## Bibtex
 
